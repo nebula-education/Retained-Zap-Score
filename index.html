@@ -399,6 +399,8 @@ canvas#confetti{position:absolute;inset:0;pointer-events:none;z-index:0}
 </div>
 
 <script>
+const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbyHHW53mfnoG-i7cMyUZjk3c_4Q5kQjOIdhJJ6n5AeKcAq8lltsHyFMwoeOITopwXF2/exec';
+
 let advisorName = '', advisorEmail = '';
 let timerInterval = null, timerSeconds = 0;
 
@@ -530,6 +532,27 @@ function submitScore() {
 
   switchScreen('screen-chat', 'screen-end');
   setTimeout(() => launchConfetti(score), 100);
+  sendToSheets(score, feedback);
+}
+
+// ── GOOGLE SHEETS ─────────────────────────────────────────────────────────────
+async function sendToSheets(score, feedbackText) {
+  const payload = {
+    sheetTarget:  'retained_zap',
+    timestamp:    new Date().toISOString(),
+    advisorName:  advisorName,
+    advisorEmail: advisorEmail,
+    totalScore:   score,
+    feedback:     feedbackText || '',
+  };
+  try {
+    await fetch(WEBHOOK_URL, {
+      method:  'POST',
+      mode:    'no-cors',
+      headers: { 'Content-Type': 'text/plain' },
+      body:    JSON.stringify(payload),
+    });
+  } catch(e) { console.error('Sheets:', e); }
 }
 
 // ── CONFETTI ──────────────────────────────────────────────────────────────────
